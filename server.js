@@ -13,7 +13,7 @@ var Note = require("./models/Note");
 var Article = require("./models/Article");
 
 // Require all models
-var db = require("./models");
+// var db = require("./models");
 
 var PORT = 3000;
 
@@ -27,7 +27,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(express.static("public"));
 
-mongoose.connect("mongodb://localhost/unit18Populater", { useNewUrlParser: true });
+mongoose.connect("mongodb://localhost/scrape-news-db", { useNewUrlParser: true });
 
 app.engine("handlebars", exphbs({defaultLayout: "main"}));
 app.set("view engine", "handlebars");
@@ -38,36 +38,38 @@ app.set("view engine", "handlebars");
 
 app.get("/", function(req, res) {
 	Article.find({}, null, {sort: {created: -1}}, function(err, data) {
-		if(data.length === 0) {
+		if (data.length === 0) {
 			res.render("placeholder", {message: "There's nothing scraped yet. Please click \"Scrape For Newest Articles\""});
 		}
-		else{
+		else {
 			res.render("index", {articles: data});
 		}
 	});
 });
 
 app.get("/scrape", function(req, res) {
-	axios.get("https://www.nytimes.com/section/world").then(function(response) {
+
+	axios.get("https://www.cnbc.com/investing/").then(function(response) {
+		
 		var $ = cheerio.load(response.data);
-		var result = {};
-		$("div.story-body").each(function(i, element) {
-			var link = $(element).find("a").attr("href");
-			var title = $(element).find("h2.headline").text().trim();
-			var summary = $(element).find("p.summary").text().trim();
-			var img = $(element).parent().find("figure.media").find("img").attr("src");
+
+		$(".headline").each(function(i, element) {
+
+			var result = {};
+
+			var link = "https://www.cnbc.com/investing" + $(element).children("a").attr("href");
+			var title = $(element).children("a").text().trim();
+			var summary = $(element).children("p").text().trim();
+			// var img = $(element).parent().find("figure.css-1g665 eujt5ym1").find("img").attr("src");
+
 			result.link = link;
 			result.title = title;
-			if (summary) {
-				result.summary = summary;
-			};
-			if (img) {
-				result.img = img;
-			}
-			else {
-				result.img = $(element).find(".wide-thumb").find("img").attr("src");
-			};
+			result.summary = summary;
+
+			console.log(result);
+
 			var entry = new Article(result);
+
 			Article.find({title: result.title}, function(err, data) {
 				if (data.length === 0) {
 					entry.save(function(err, data) {
