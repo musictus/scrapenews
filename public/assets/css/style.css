@@ -68,6 +68,7 @@ header button {
 }
 
 #search-submit {
+	color: black;
 	float: right;
 	height: 80%;
 	margin-top: 10px;

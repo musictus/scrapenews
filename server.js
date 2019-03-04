@@ -27,7 +27,9 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(express.static("public"));
 
-mongoose.connect("mongodb://localhost/scrape-news-db", { useNewUrlParser: true });
+var MONGODB_URI = process.env.MONGODB_URI || "mongodb://localhost/scrape-news-db";
+
+mongoose.connect(MONGODB_URI);
 
 app.engine("handlebars", exphbs({defaultLayout: "main"}));
 app.set("view engine", "handlebars");
@@ -43,6 +45,7 @@ app.get("/", function(req, res) {
 		}
 		else {
 			res.render("index", {articles: data});
+			console.log("data data: " + data)
 		}
 	});
 });
@@ -57,10 +60,9 @@ app.get("/scrape", function(req, res) {
 
 			var result = {};
 
-			var link = "https://www.cnbc.com/investing" + $(element).children("a").attr("href");
+			var link = "https://www.cnbc.com" + $(element).children("a").attr("href");
 			var title = $(element).children("a").text().trim();
-			var summary = $(element).children("p").text().trim();
-			// var img = $(element).parent().find("figure.css-1g665 eujt5ym1").find("img").attr("src");
+			var summary = $(element).nextAll(".desc").text().trim();
 
 			result.link = link;
 			result.title = title;
